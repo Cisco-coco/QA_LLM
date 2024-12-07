@@ -1,0 +1,31 @@
+# 建议先把bitsandbytes装了，如果python -m bitsandbytes报错，依据报错信息操作后如果不管用：
+# 1.现在用户目录下安装一个cuda
+# 2.重新装bitsandbytes
+# 3.安装MemoryBank的requirement.txt
+# pymupdf
+# paddlepaddle==2.4.2
+# paddleocr 
+langchain==0.0.142
+transformers==4.28.0
+unstructured[local-inference]
+layoutparser[layoutmodels,tesseract]
+nltk
+sentence-transformers==2.2.2
+llama-index==0.5.23.post1
+beautifulsoup4
+icetk
+cpm_kernels
+faiss-cpu
+accelerate
+gradio==3.24.1
+fastapi
+uvicorn
+peft<=0.9.0
+pypinyin
+bitsandbytes
+click~=8.1.3
+tabulate
+openai==0.27.6
+mdtex2html
+pygments
+huggingface_hub<0.26.0
