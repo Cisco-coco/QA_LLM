@@ -33,7 +33,8 @@ python>=3.9 (我配的时候用的是3.9) linux 系统
 最后记得再把torch重装成GPU版
 
 
-### 模型下载
+### LoRA模型下载（可以跳过）
+
 SiliconFriend分别提供基于ChatGLM和BELLE两个版本的[LoRA 模型](https://github.com/zhongwanjun/MemoryBank-SiliconFriend/releases/tag/LoRA_checkpoint)。在下载模型前，请确保你已经安装了[Git LFS](https://docs.github.com/zh/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
 
 LoRA是一种大模型参数微调方式，与SFT不同LoRA不直接修改源模型的参数而是在原网络里拼上旁路，训练旁路的参数。这一步下载的参数是这些旁路的参数，github仓库里已经下好了，可以跳过。
@@ -64,11 +65,11 @@ cd ..
 
 ### 源模型参数下载
 
-除LoRA模型外，在运行demo的时候还需要下载源模型参数，一般来说下不动。
+除LoRA模型外，在运行demo的时候还需要下载源模型参数，可能会遇到网络原因引发的报错。
 
-#### model_download.py脚本安装
+#### 通过model_download.py脚本下载参数
 
-可以使用`python model_download.py --repo_id xxx/xxx`下载把THUDM/chatglm-6b、GanymedeNil/text2vec-large-chinese下下来就行。
+可以使用`python model_download.py --repo_id xxx/xxx`下载，把THUDM/chatglm-6b、GanymedeNil/text2vec-large-chinese下下来就行。
 
 
 
@@ -80,12 +81,14 @@ export OPENAI_API_KEY=YOUR_API_KEY
 #### SiliconFriend(ChatGLM) 网页版 Demo
 
 设置[SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh](SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh)中的API KEY 'OPENAI_API_KEY' 和LoRA模型 'adapter_model'。当运行模型时，英文设置 '--language=en'而中文设置 '--language=cn'。运行仓库中的[SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh](SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh):
+运行前还需要更改设置里的路径参数，可以参考群里发的word文档
 
 ```shell
 
 cd ./SiliconFriend-ChatGLM-BELLE
 bash launch_chatglm_app.sh
 ```
+
 
 #### SiliconFriend(ChatGLM) 命令行 Demo
 
