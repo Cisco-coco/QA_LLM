@@ -8,11 +8,11 @@ import copy
 from peft import PeftModel
 from transformers import AutoModel, AutoTokenizer
 
-# model = AutoModel.from_pretrained("/data/sshfs/dataroot/models/THUDM/chatglm-6b", trust_remote_code=True)
-# model = model.to("cuda:2")
-# model = PeftModel.from_pretrained(model, "/data/sshfs/94code/MemoryBank-SiliconFriend/model/shibing624/chatglm-6b-belle-zh-lora")
-# model = model.half().to("cuda:2").eval()  # fp16
-# tokenizer = AutoTokenizer.from_pretrained("/data/sshfs/dataroot/models/THUDM/chatglm-6b", trust_remote_code=True)
+model = AutoModel.from_pretrained("/data/sshfs/dataroot/models/THUDM/chatglm-6b", trust_remote_code=True)
+model = model.to("cuda:1")
+model = PeftModel.from_pretrained(model, "/data/sshfs/94code/MemoryBank-SiliconFriend/model/shibing624/chatglm-6b-belle-zh-lora")
+model = model.half().to("cuda:1").eval()  # fp16
+tokenizer = AutoTokenizer.from_pretrained("/data/sshfs/dataroot/models/THUDM/chatglm-6b", trust_remote_code=True)
 
 
 class LLMClientSimple:
@@ -132,6 +132,7 @@ def summarize_person_prompt(content,user_name,boot_name,language):
 
 def summarize_memory(memory_dir,name=None,language='cn'):
     '''
+    用户点击summarize  memory bank->summarize_memory_event_personality->summarize_memory
     name: 待更新summary的用户名(在demo运行中触发时为当前用户)，如果为None则为所有用户更新summary
     '''
     global model,tokenizer
@@ -172,7 +173,7 @@ def summarize_memory(memory_dir,name=None,language='cn'):
         
     with open(memory_dir,'w',encoding='utf8') as f:        
         print(f'Sucessfully update memory for {name if name is not None else "all users"}')
-        json.dump(memory,f,ensure_ascii=False)
+        json.dump(memory,f,ensure_ascii=False) # 将更新后的memory写入磁盘
     return memory
 
 if __name__ == '__main__':

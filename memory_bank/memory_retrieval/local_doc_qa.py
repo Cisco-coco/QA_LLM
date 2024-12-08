@@ -137,7 +137,10 @@ def similarity_search_with_score_by_vector(
         embedding: List[float], # 1024维的向量
         k: int = 4,
     ) -> List[Tuple[Document, float]]:
-        '''这个函数用于替换FAISS类中原本的同名函数'''
+        '''
+        用户点击Send发送信息->predict_new->chat->build_prompt_with_search_memory_chatglm_app->search_memory->similarity_search_with_score->similarity_search_with_score_by_vector
+        这个函数用于替换FAISS类中原本的同名函数，为了同时返回匹配到的doc的前后文（原本的函数匹配完doc就直接返回doc了）
+        '''
         scores, indices = self.index.search(np.array([embedding], dtype=np.float32), k)
         docs = []
         id_set = set()
@@ -256,7 +259,6 @@ class LocalMemoryRetrieval:
                 if not vs_path:
                     vs_path = f"""{VS_ROOT_PATH}{os.path.splitext(file)[0]}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}"""
                 vector_store = FAISS.from_documents(docs, self.embeddings) # 问答变成embedding过程
-
             vector_store.save_local(vs_path) # 这里把index存回去了
             return vs_path, loaded_files
         else:
@@ -273,8 +275,8 @@ class LocalMemoryRetrieval:
                     query,
                     vector_store):
         '''
+        用户点击Send发送信息->predict_new->chat->build_prompt_with_search_memory_chatglm_app->search_memory
         匹配历史对话，返回的历史对话将被加入prompt中
-
         vector_store: langchain.vectorstores.faiss.FAISS object
         '''
         # vector_store = FAISS.load_local(vs_path, self.embeddings)

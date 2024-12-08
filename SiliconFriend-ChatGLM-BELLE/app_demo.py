@@ -35,7 +35,7 @@ if data_args.enable_forget_mechanism:
 else:
     from memory_retrieval.local_doc_qa import LocalMemoryRetrieval
 
-local_memory_qa = LocalMemoryRetrieval()
+local_memory_qa = LocalMemoryRetrieval() # 创建索引记忆对象
 EMBEDDING_MODEL = EMBEDDING_MODEL_CN if language == 'cn' else EMBEDDING_MODEL_EN
 local_memory_qa.init_cfg(
                         embedding_model=EMBEDDING_MODEL,
@@ -83,8 +83,10 @@ def chat(model, tokenizer, query: str, history: List[Tuple[str, str]] = None, ma
             local_memory_qa=None,
             **kwargs):
     """
-    user_memory里是之前的对话数据：
-
+    主要交互功能实现函数！
+    用户点击Send发送信息->predict_new->chat
+    user_memory里是之前的对话数据
+    user_memory_index是FAISS生成的index用于retrieval记忆    
     """
     if history is None:
         history = []

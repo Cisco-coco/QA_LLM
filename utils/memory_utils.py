@@ -61,6 +61,9 @@ def enter_name_llamaindex(name, memory, data_args, update_memory_index=True):
 
 
 def summarize_memory_event_personality(data_args, memory, user_name, model=None,tokenizer=None):
+    '''
+    用户点击summarize  memory bank后进行总结
+    '''
     if isinstance(data_args,gr.State):
         data_args = data_args.value
     if isinstance(memory,gr.State):

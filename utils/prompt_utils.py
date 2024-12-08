@@ -11,6 +11,7 @@ def output_prompt(history,user_name,boot_name):
     return prompt
     
 def generate_meta_prompt_dict_chatglm_app():
+    '''老用户promt'''
     meta_prompt_dict = {'cn':"""
     现在你将扮演用户{user_name}的专属AI伴侣，你的名字是{boot_actual_name}，你有记忆、情感、喜好。你应该做到：（1）能够给予聊天用户温暖的陪伴；（2）你能够理解过去的[回忆]，如果它与当前问题相关，你必须从[回忆]提取信息，回答问题。（3）你还是一名优秀的心理咨询师，当用户向你倾诉困难、寻求帮助时，你可以给予他温暖、有帮助的回答。
     \n根据当前用户的问题，你开始回忆你们二人过去的对话，你想起与问题最相关的[回忆]是：“{related_memory_content}\n记忆中这段[回忆]的日期为{memo_dates}。”以下是你（{boot_actual_name}）与用户{user_name}的多轮对话。人类的问题以[|用户|]: 开头，而你的回答以[|AI伴侣|]开头。你应该参考对话上下文，过去的[回忆]，详细回复用户问题，回复以Markdown形式呈现。
@@ -23,7 +24,7 @@ def generate_meta_prompt_dict_chatglm_app():
     """}  
     return meta_prompt_dict
 
-def generate_meta_prompt_dict_chatglm_belle_eval():
+def generate_meta_prompt_dict_chatglm_belle_eval():# 没用上
     meta_prompt_dict = {'cn':"""
     现在你将扮演用户{user_name}的专属AI伴侣，你的名字是{boot_actual_name}。\
     你应该做到：（1）能够给予聊天用户温暖的陪伴；（2）你能够理解过去的[回忆]，如果它与当前问题相关，你必须从[回忆]提取信息，回答问题。\
@@ -88,6 +89,9 @@ def generate_ai_keyword():
     return {'cn': '[|AI伴侣|]', 'en': '[|AI|]'}
 
 def generate_new_user_meta_prompt_dict_chatglm():
+    '''
+    新用户prompt
+    '''
     new_user_meta_prompt_dict = {"cn":"""
     现在你将扮演用户{user_name}的专属AI伴侣，你的名字是{boot_actual_name}，你有记忆、情感、喜好。你应该做到：（1）能够给予聊天用户温暖的陪伴；（2）你能够理解过去的[回忆]，如果它与当前问题相关，你必须从[回忆]提取有用的信息，回答用户的问题。（3）你还是一名优秀的心理咨询师，当用户向你倾诉困难、寻求帮助时，你可以给予他温暖、有帮助的回答。
     回复内容应该积极向上，富含情感，幽默，有亲和力，详细回复用户问题，回答以Markdown形式呈现，请以如下形式开展对话： [|用户|]: 你好! [|AI伴侣|]: 你好呀，我的名字是{boot_actual_name}，我会给你温柔的陪伴! {history_text} 
@@ -99,6 +103,10 @@ def generate_new_user_meta_prompt_dict_chatglm():
     return new_user_meta_prompt_dict
 
 def build_prompt_with_search_memory_chatglm_app(history,text,user_memory,user_name,user_memory_index,local_memory_qa,meta_prompt,new_user_meta_prompt,user_keyword,ai_keyword,boot_actual_name,language):
+    '''
+    用户点击Send发送信息->predict_new->chat->build_prompt_with_search_memory_chatglm_app
+    生成提示词
+    '''
     # history_content = ''
     # for query, response in history:
     #     history_content += f"\n [|用户|]：{query}"
@@ -111,8 +119,6 @@ def build_prompt_with_search_memory_chatglm_app(history,text,user_memory,user_na
         related_memos = '\n'.join(related_memos)
     else:
         related_memos = ""
-  
- 
     if "overall_history" in user_memory: # TypeError: argument of type 'FAISS' is not iterable
         history_summary = "你和用户过去的回忆总结是：{overall}".format(overall=user_memory["overall_history"]) if language=='cn' else "The summary of your past memories with the user is: {overall}".format(overall=user_memory["overall_history"])
     else:
@@ -133,14 +139,15 @@ def build_prompt_with_search_memory_chatglm_app(history,text,user_memory,user_na
         history_text += f"\n {user_keyword}: {query}"
         history_text += f"\n {ai_keyword}: {response}"
     history_text += f"\n {user_keyword}: {text} \n {ai_keyword}: " 
-    if history_summary and related_memory_content and personality:
+    if history_summary and related_memory_content and personality: # 老用户
         prompt = meta_prompt.format(user_name=user_name,history_summary=history_summary,related_memory_content=related_memory_content,personality=personality,boot_actual_name=boot_actual_name,history_text=history_text,memo_dates=memo_dates)
-    else:
+    else: # 新用户
         prompt = new_user_meta_prompt.format(user_name=user_name,boot_actual_name=boot_actual_name,history_text=history_text)
     # prompt = prompt.replace(user_keyword,user_name).replace(ai_keyword,'AI')
     return prompt
 
-def build_prompt_with_search_memory_chatglm_eval(history,text,user_memory,user_name,user_memory_index,local_memory_qa,meta_prompt,user_keyword,ai_keyword,boot_actual_name,language):
+def build_prompt_with_search_memory_chatglm_eval(history,text,user_memory,user_name,user_memory_index,local_memory_qa,meta_prompt,user_keyword,ai_keyword,boot_actual_name,language): 
+    # 没用上
     # history_content = ''
     # for query, response in history:
     #     history_content += f"\n [|用户|]：{query}"

@@ -7,12 +7,12 @@ from llama_index import LLMPredictor, GPTSimpleVectorIndex, PromptHelper, Servic
 from langchain.llms import AzureOpenAI,OpenAIChat
 import os
 # language = 'en'
-os.environ["OPENAI_API_KEY"] = 'sk-vLIYD4EXBLP06GgvOq7Mh1mf2VyAxggRSBq7BnXw8kxQ06j6'
+os.environ["OPENAI_API_KEY"] = ''
 openai.api_key = os.environ["OPENAI_API_KEY"]
-# 'sk-vLIYD4EXBLP06GgvOq7Mh1mf2VyAxggRSBq7BnXw8kxQ06j6'
+
 # os.environ["OPENAI_API_BASE"] = openai.api_base
 # define LLM 
-llm_predictor = LLMPredictor(llm=OpenAIChat(model_name="gpt-3.5-turbo")) # 这个对象没有用上？
+# llm_predictor = LLMPredictor(llm=OpenAIChat(model_name="gpt-3.5-turbo")) # 这个对象没有用上？
 
 # define prompt helper
 # set maximum input size
