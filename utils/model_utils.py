@@ -21,11 +21,12 @@ def load_chatglm_tokenizer_and_model(model_path):
     return tokenizer, model
 
 def load_lora_chatglm_tokenizer_and_model(model_path,adapter_model):
+    """在app_demo.py中被使用 用于加载LLM模型和tokenizer"""
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModel.from_pretrained(model_path, trust_remote_code=True)
     model = PeftModel.from_pretrained(model, adapter_model)
     torch.set_default_tensor_type(torch.cuda.FloatTensor)
-    model = model.half().cuda().eval()
+    model = model.half().cuda().eval() # half半精度加快运行速度减少显存
     return tokenizer, model
 
 def load_prefix_chatglm_tokenizer_and_model(model_path,ptuning_checkpoint):

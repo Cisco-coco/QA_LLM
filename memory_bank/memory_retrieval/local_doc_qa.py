@@ -38,7 +38,7 @@ class JsonMemoryLoader(UnstructuredFileLoader):
                 metadata = self._get_metadata(date)
                 memory_str = f'时间{date}的对话内容：' if self.language=='cn' else f'Conversation content on {date}:'
                 user_kw = '[|用户|]：' if self.language=='cn' else '[|User|]:'
-                ai_kw = '[|AI恋人|]：' if self.language=='cn' else '[|AI|]:'
+                ai_kw = '[|AI伴侣|]：' if self.language=='cn' else '[|AI|]:'
                 for i,(dialog) in enumerate(content):
                     query, response = dialog['query'],dialog['response']
                     # memory_str += f'Memory: '
@@ -101,7 +101,7 @@ def load_file(filepath,language='cn'):
 
 def load_memory_file(filepath,user_name,language='cn'):
     loader = JsonMemoryLoader(filepath,language)
-    docs = loader.load(user_name)
+    docs = loader.load(user_name) # Doc对象的list
     # if language=='cn':
     # textsplitter = ChineseTextSplitter(pdf=False)
     # else:
@@ -134,9 +134,13 @@ def seperate_list(ls: List[int]) -> List[List[int]]:
 
 def similarity_search_with_score_by_vector(
         self,
-        embedding: List[float],
+        embedding: List[float], # 1024维的向量
         k: int = 4,
     ) -> List[Tuple[Document, float]]:
+        '''
+        用户点击Send发送信息->predict_new->chat->build_prompt_with_search_memory_chatglm_app->search_memory->similarity_search_with_score->similarity_search_with_score_by_vector
+        这个函数用于替换FAISS类中原本的同名函数，为了同时返回匹配到的doc的前后文（原本的函数匹配完doc就直接返回doc了）
+        '''
         scores, indices = self.index.search(np.array([embedding], dtype=np.float32), k)
         docs = []
         id_set = set()
@@ -145,11 +149,12 @@ def similarity_search_with_score_by_vector(
                 # This happens when not enough docs are returned.
                 continue
             _id = self.index_to_docstore_id[i]
-            doc = self.docstore.search(_id)
-            id_set.add(i)
-            docs_len = len(doc.page_content)
-            for k in range(1, max(i, len(docs)-i)):
-                for l in [i+k, i-k]:
+            doc = self.docstore.search(_id) # doc是一次问答（一问一答）
+            id_set.add(i) # 原本的函数到这里就结束了
+            docs_len = len(doc.page_content)  
+            # for k in range(1, max(i, len(docs)-i)): # 这里这个range的范围感觉写得不太对？ len(docs)==0
+            for k in range(1, min(i, 5)): # 改成这样子，最多往前/后找5轮问答
+                for l in [i+k, i-k]: # 这里的代码是想把doc的前后文也找出来，这里的index是连续的所以可以这么干
                     if 0 <= l < len(self.index_to_docstore_id):
                         _id0 = self.index_to_docstore_id[l]
                         doc0 = self.docstore.search(_id0)
@@ -158,7 +163,7 @@ def similarity_search_with_score_by_vector(
                         if docs_len + len(doc0.page_content) > self.chunk_size:
                             break
                         # print(doc0)
-                        elif doc0.metadata["source"] == doc.metadata["source"]:
+                        elif doc0.metadata["source"] == doc.metadata["source"]: # metadata里存储的是日期
                             docs_len += len(doc0.page_content)
                             id_set.add(l)
         id_list = sorted(list(id_set))
@@ -171,7 +176,7 @@ def similarity_search_with_score_by_vector(
                 else:
                     _id0 = self.index_to_docstore_id[id]
                     doc0 = self.docstore.search(_id0)
-                    doc.page_content += doc0.page_content
+                    doc.page_content += doc0.page_content # 如理吧连续发生的多段一问一答的doc拼起来
             if not isinstance(doc, Document):
                 raise ValueError(f"Could not find document for id {_id}, got {doc}")
             docs.append((doc, scores[0][j]))
@@ -189,8 +194,10 @@ class LocalMemoryRetrieval:
                  language='cn'
                  ):
         self.language = language
+
         self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model_dict[embedding_model],
-                                                model_kwargs={'device': embedding_device})
+                                                # model_kwargs={'device': embedding_device}
+                                                )
         self.top_k = top_k
     
     def init_memory_vector_store(self,
@@ -198,6 +205,11 @@ class LocalMemoryRetrieval:
                                     vs_path: str or os.PathLike = None,
                                     user_name: str = None,
                                     cur_date: str = None):
+        '''
+        参考：https://zhuanlan.zhihu.com/p/627439522
+        file_path: ../../memories/update_memory_0512_eng.json
+        vs_path: ../../memories/memory_index/小明_index
+        '''
         loaded_files = []
         # filepath = filepath.replace('user',user_name)
         # vs_path = vs_path.replace('user',user_name)
@@ -239,31 +251,34 @@ class LocalMemoryRetrieval:
                     print(e)
                     print(f"{file} 未能成功加载")
         if len(docs) > 0:
-            if vs_path and os.path.isdir(vs_path):
-                vector_store = FAISS.load_local(vs_path, self.embeddings)
+            if vs_path and os.path.isdir(vs_path): # 貌似不会进入这一分支
+                vector_store = FAISS.load_local(vs_path, self.embeddings) # 批量直接导入embedding 
                 print(f'Load from previous memory index {vs_path}.')
-                vector_store.add_documents(docs)
+                vector_store.add_documents(docs) # 新增单个文档（add_document）
             else:
                 if not vs_path:
                     vs_path = f"""{VS_ROOT_PATH}{os.path.splitext(file)[0]}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}"""
-                vector_store = FAISS.from_documents(docs, self.embeddings)
-
-            vector_store.save_local(vs_path)
+                vector_store = FAISS.from_documents(docs, self.embeddings) # 问答变成embedding过程
+            vector_store.save_local(vs_path) # 这里把index存回去了
             return vs_path, loaded_files
         else:
             print("文件均未成功加载，请检查依赖包或替换为其他文件再次上传。")
             return None, loaded_files
     
     def load_memory_index(self,vs_path):
-        vector_store = FAISS.load_local(vs_path, self.embeddings)
-        FAISS.similarity_search_with_score_by_vector = similarity_search_with_score_by_vector
+        vector_store = FAISS.load_local(vs_path, self.embeddings) # 批量直接导入embedding
+        FAISS.similarity_search_with_score_by_vector = similarity_search_with_score_by_vector  # 这行代码替换了FAISS中的函数
         vector_store.chunk_size=self.chunk_size
         return vector_store
     
     def search_memory(self,
                     query,
                     vector_store):
-
+        '''
+        用户点击Send发送信息->predict_new->chat->build_prompt_with_search_memory_chatglm_app->search_memory
+        匹配历史对话，返回的历史对话将被加入prompt中
+        vector_store: langchain.vectorstores.faiss.FAISS object
+        '''
         # vector_store = FAISS.load_local(vs_path, self.embeddings)
         # FAISS.similarity_search_with_score_by_vector = similarity_search_with_score_by_vector
         # vector_store.chunk_size=self.chunk_size

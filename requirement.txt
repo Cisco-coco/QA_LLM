@@ -1,7 +1,7 @@
-pymupdf
-paddlepaddle==2.4.2
-paddleocr
-langchain==0.0.146
+# pymupdf
+# paddlepaddle==2.4.2
+# paddleocr 
+langchain==0.0.142
 transformers==4.28.0
 unstructured[local-inference]
 layoutparser[layoutmodels,tesseract]
@@ -16,9 +16,12 @@ accelerate
 gradio==3.24.1
 fastapi
 uvicorn
-peft
+peft<=0.9.0
 pypinyin
 bitsandbytes
 click~=8.1.3
 tabulate
 openai==0.27.6
+mdtex2html
+pygments
+huggingface_hub<0.26.0

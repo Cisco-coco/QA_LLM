@@ -1,5 +1,5 @@
 ## Introduction
-Read this in [Chinese](README_cn.md) (阅读中文版本).
+Read this in [Chinese](README_cn.md) (阅读中文版本 中文readme里有额外的说明).
 
 This project includes the data, model and code for paper [MemoryBank: Enhancing Large Language Models with Long-Term Memory](https://arxiv.org/pdf/2305.10250.pdf).
 

@@ -11,6 +11,7 @@ sys.path.append(memory_bank_path)
 from summarize_memory import summarize_memory
 
 def enter_name(name, memory,local_memory_qa,data_args,update_memory_index=True):
+    '''点击UI界面的Remember Me的时候触发'''
     cur_date = datetime.date.today().strftime("%Y-%m-%d")
     user_memory_index = None
     if isinstance(data_args,gr.State):
@@ -22,16 +23,16 @@ def enter_name(name, memory,local_memory_qa,data_args,update_memory_index=True):
     memory_dir = os.path.join(data_args.memory_basic_dir,data_args.memory_file)
     if name in memory.keys():
         user_memory = memory[name]
-        memory_index_path = os.path.join(data_args.memory_basic_dir,f'memory_index/{name}_index')
+        memory_index_path = os.path.join(data_args.memory_basic_dir,f'memory_index/{name}_index') # 每个用户的FAISS index会被存储在memory文件夹里
         os.makedirs(os.path.dirname(memory_index_path), exist_ok=True)
         if (not os.path.exists(memory_index_path)) or update_memory_index:
             print(f'Initializing memory index {memory_index_path}...')
         # filepath = input("Input your local knowledge file path 请输入本地知识文件路径：")
             if os.path.exists(memory_index_path):
-                shutil.rmtree(memory_index_path)
-            memory_index_path, _ = local_memory_qa.init_memory_vector_store(filepath=memory_dir,vs_path=memory_index_path,user_name=name,cur_date=cur_date)                      
+                shutil.rmtree(memory_index_path) # shutil.rmtree函数用于删除文件夹 这里删除了之前的index
+            memory_index_path, _ = local_memory_qa.init_memory_vector_store(filepath=memory_dir,vs_path=memory_index_path,user_name=name,cur_date=cur_date) # 这个函数生成了新的index根据对话历史，然后把它存储到磁盘
         
-        user_memory_index = local_memory_qa.load_memory_index(memory_index_path) if memory_index_path else None
+        user_memory_index = local_memory_qa.load_memory_index(memory_index_path) if memory_index_path else None # 这里把刚刚存进磁盘里的index又读出来 （不清楚为什么它这里整了一个这样冗余的操作）
         msg = f"欢迎回来，{name}！" if data_args.language=='cn' else f"Wellcome Back, {name}！"
         return msg,user_memory,memory, name,user_memory_index
     else:
@@ -59,17 +60,22 @@ def enter_name_llamaindex(name, memory, data_args, update_memory_index=True):
         return f"Welcome new user{name}！I will remember your name and call you by your name in the next conversation",memory[name],user_memory_index
 
 
-def summarize_memory_event_personality(data_args, memory, user_name):
+def summarize_memory_event_personality(data_args, memory, user_name, model=None,tokenizer=None):
+    '''
+    用户点击summarize  memory bank后进行总结
+    '''
     if isinstance(data_args,gr.State):
         data_args = data_args.value
     if isinstance(memory,gr.State):
         memory = memory.value
     memory_dir = os.path.join(data_args.memory_basic_dir,data_args.memory_file)
+    
     memory = summarize_memory(memory_dir,user_name,language=data_args.language)
     user_memory = memory[user_name] if user_name in memory.keys() else {}
     return user_memory#, user_memory_index 
  
 def save_local_memory(memory,b,user_name,data_args):
+    '''每次与用户交互后就调用这个函数更新MemoryBank'''
     if isinstance(data_args,gr.State):
         data_args = data_args.value
     if isinstance(memory,gr.State):
@@ -83,5 +89,5 @@ def save_local_memory(memory,b,user_name,data_args):
         memory[user_name]['history'][date] = []
     # date = len(memory[user_name]['history'])
     memory[user_name]['history'][date].append({'query':b[-1][0],'response':b[-1][1]})
-    json.dump(memory,open(memory_dir,"w",encoding="utf-8"),ensure_ascii=False)
+    json.dump(memory,open(memory_dir,"w",encoding="utf-8"),ensure_ascii=False) # 更新磁盘上的MemoryBank
     return memory

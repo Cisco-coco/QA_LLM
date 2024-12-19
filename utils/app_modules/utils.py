@@ -12,7 +12,7 @@ import requests
 import re
 import html
 from collections.abc import Iterator
-import markdown2
+# import markdown2
 import torch
 import sys
 from pygments.lexers import guess_lexer, ClassNotFound

@@ -15,12 +15,29 @@ SilconFriend 是一款集成了MemoryBank的双语AI聊天陪伴机器人。通�
 
 ### 环境安装
 
+
 使用pip安装依赖: `pip install -r requirement.txt`，所有的实验都在Tesla A100 80GB GPU和cuda 11.7环境下完成。
 
-### 模型下载
+python>=3.9 (我配的时候用的是3.9) linux 系统
+
+配环境时如果遇到关于bitsandbytes包的报错（`python -m bitsandbytes`报错），且依据报错信息操作后如果不管用，可以参考：
+
+1.在当前用户目录下安装一个cuda，然后添加到用户环境变量 (建议用报错信息里提供的install_cuda.sh脚本装)
+
+2.新建个conda环境
+
+2.先装bitsandbytes，确认`python -m bitsandbytes`不报错
+
+3.`pip install -r requirement.txt`
+
+最后记得再把torch重装成GPU版
+
+
+### LoRA模型下载（可以跳过）
+
 SiliconFriend分别提供基于ChatGLM和BELLE两个版本的[LoRA 模型](https://github.com/zhongwanjun/MemoryBank-SiliconFriend/releases/tag/LoRA_checkpoint)。在下载模型前，请确保你已经安装了[Git LFS](https://docs.github.com/zh/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
 
-
+LoRA是一种大模型参数微调方式，与SFT不同LoRA不直接修改源模型的参数而是在原网络里拼上旁路，训练旁路的参数。这一步下载的参数是这些旁路的参数，github仓库里已经下好了，可以跳过。
 
 #### 下载SiliconFriend(ChatGLM)
 首先使用[ChatGLM](https://huggingface.co/THUDM/chatglm-6b)模型,再下载它的[LoRA模型](https://github.com/zhongwanjun/MemoryBank-SiliconFriend/releases/download/LoRA_checkpoint/ChatGLM-LoRA-checkpoint.zip)。
@@ -36,6 +53,7 @@ cd ..
 #### 下载SiliconFriend(BELLE)
 首先使用[BELLE](https://huggingface.co/BelleGroup/BELLE-LLaMA-7B-2M-enc)模型,再下载它的[LoRA模型](https://github.com/zhongwanjun/MemoryBank-SiliconFriend/releases/download/LoRA_checkpoint/BELLE-LoRA-checkpoint.zip)。
 
+
 ```shell
 cd model
 git clone https://github.com/zhongwanjun/MemoryBank-SiliconFriend/releases/download/LoRA_checkpoint/BELLE-LoRA-checkpoint.zip
@@ -43,6 +61,17 @@ unzip BELLE-LoRA-checkpoint.zip
 rm BELLE-LoRA-checkpoint.zip
 cd ..
 ```
+
+
+### 源模型参数下载
+
+除LoRA模型外，在运行demo的时候还需要下载源模型参数，可能会遇到网络原因引发的报错。
+
+#### 通过model_download.py脚本下载参数
+
+可以使用`python model_download.py --repo_id xxx/xxx`下载，把THUDM/chatglm-6b、GanymedeNil/text2vec-large-chinese下下来就行。
+
+
 
 ### Demo
 ```
@@ -52,12 +81,14 @@ export OPENAI_API_KEY=YOUR_API_KEY
 #### SiliconFriend(ChatGLM) 网页版 Demo
 
 设置[SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh](SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh)中的API KEY 'OPENAI_API_KEY' 和LoRA模型 'adapter_model'。当运行模型时，英文设置 '--language=en'而中文设置 '--language=cn'。运行仓库中的[SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh](SiliconFriend-ChatGLM-BELLE/launch_chatglm_app.sh):
+运行前还需要更改设置里的路径参数，可以参考群里发的word文档
 
 ```shell
 
 cd ./SiliconFriend-ChatGLM-BELLE
 bash launch_chatglm_app.sh
 ```
+
 
 #### SiliconFriend(ChatGLM) 命令行 Demo
 
@@ -86,6 +117,9 @@ bash launch_belle_cmd.sh
 
 #### 总结事件和用户性格
 如果你只需要为memory.json文件中保存的记忆，总结其中的事件和用户性格，可修改脚本中的文件名后，运行以下代码。在每个demo文件中，也有接口可以直接进行总结。
+
+网页demo点击 summarize  memory bank即可
+
 ```
 cd memory_bank/
 python summarize_memory.json
